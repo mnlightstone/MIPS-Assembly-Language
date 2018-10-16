@@ -1,0 +1,55 @@
+.text
+.globl main
+main:
+  # Call fib with an argument of 3.
+  li $a0, 3	# Put argument in $a0.
+  jal fib		# Call fib.
+
+  # Output the result.
+  addi $a0, $v0, 0	# Put value to print in $a0.
+  li $v0, 1		      # Specify system call 1 (print int).
+  syscall		      # Make the system call.
+
+  # Exit the program.
+  li $v0, 10	# Specify system call 10 (exit).
+  syscall		# Make the system call.
+
+# fibonacci returns the nth value of the fibonacci sequence into $v0. n is in $a0.
+
+fib:
+  # Save callee-saved registers.
+  subi $sp, $sp, 8	# Make room for 2 items on stack.
+  sw $ra, 4($sp)	      # Save the return address.
+  sw $a0, 0($sp)	      # Save the argument n.
+
+  # Check whether to execute base case or recursive case.
+  slti $t0, $a0, 2	       # Is n less than 2?
+  beq $t0, $zero, recursive    # If not, branch to the recursive case
+
+  # In the base case, return n.
+  add  $v0, $a0, $zero	# Put n in the return value register.
+  addi $sp, $sp, 8	# Pop 2 items from stack.
+  jr $ra		      # Return to the caller.
+
+recursive:
+  # Call fib(n-1).
+  subi $a0, $a0, 1	# Decrement parameter n for recursive call.
+  jal fib		      # Call fibonacci recursively.
+  
+  # Store answer from fib(n-1)
+  subi $sp, $sp, 4	# Make room for 1 more item on the stack
+  sw $v0, 0($sp)	      # Store the answer from fib(n-1)
+  
+  # Call fib (n-2)
+  subi $a0, $a0, 1	# Decrement parameter n for recursive call.
+  jal fib		      # Call factorial recursively.
+ 
+  # Restore callee-saved registers.
+  lw $t0, 0($sp)	      # Load answer from n-1 call into $t0
+  lw $a0, 4($sp)	# Restore original value of argument n.
+  lw $ra, 8($sp)	# Restore original return address.
+  addi $sp, $sp, 12  	# Pop all 3 items from stack.
+  
+  # Return fibonacci (n-1) + fibonacci (n - 2).
+  add $v0, $v0, $t0	# Add fib(n-1) + fib(n-2)
+  jr $ra		# Return to the caller
